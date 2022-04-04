@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">LiveTranslation</string>
+    <string name="enter_your_password">Enter your password</string>
+    <string name="login">Login</string>
+    <string name="login2">LOGIN</string>
+    <string name="register">Register</string>
+    <string name="enter_your_email">Enter your email</string>
+    <string name="login_successful">Login successful</string>
+    <string name="user_not_found">User not found</string>
+    <string name="invalid_password">Invalid password</string>
+    <string name="login_error">There was an error while trying to login</string>
 </resources>

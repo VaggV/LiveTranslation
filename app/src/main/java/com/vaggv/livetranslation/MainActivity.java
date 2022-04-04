@@ -1,23 +1,33 @@
 package com.vaggv.livetranslation;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.AspectRatio;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.Button;
 import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+import com.vaggv.livetranslation.databinding.ActivityMainBinding;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,36 +42,38 @@ public class MainActivity extends AppCompatActivity {
 
     private PreviewView previewView;
     private ExecutorService cameraExecutor;
-
     private ImageAnalysis imageAnalyzer;
+    private ActivityMainBinding binding;
+    private Button getTextBtn;
+    private ArrayList<String> results;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
 
         previewView = findViewById(R.id.previewView);
         cameraExecutor = Executors.newSingleThreadExecutor();
         imageAnalyzer = getImageAnalyzer();
-
-        /*if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_DENIED)
-            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CAMERA}, REQ_CAM_CODE);
-
-        cameraProviderFuture = ProcessCameraProvider.getInstance(this);
-        cameraProviderFuture.addListener(() -> {
-            try {
-                ProcessCameraProvider cameraProvider = cameraProviderFuture.get();
-                bindPreview(cameraProvider);
-            } catch (ExecutionException | InterruptedException e){
-                System.out.println("Exception");
-            }
-        }, ContextCompat.getMainExecutor(this));*/
+        getTextBtn = findViewById(R.id.getTextBtn);
 
         if (allPermissionsGranted()) {
             startCamera();
         } else {
             requestPermissions();
         }
+
+        results = new ArrayList<>();
+
+        getTextBtn.setOnClickListener(view -> {
+            Intent intent = new Intent(MainActivity.this, ResultActivity.class);
+            intent.putExtra("results", results);
+
+            startActivity(intent);
+
+        });
     }
 
     private void startCamera(){
@@ -81,10 +93,22 @@ public class MainActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    void bind(@NonNull ProcessCameraProvider cameraProvider, ImageAnalysis imageAnalyzer, Preview preview){
+    public synchronized ImageAnalysis getImageAnalyzer(){
+        if (imageAnalyzer == null) {
+            imageAnalyzer = new ImageAnalysis.Builder()
+                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
+                    .build();
+            imageAnalyzer.setAnalyzer(cameraExecutor, new TextReaderAnalyzer());
+        }
+
+        return imageAnalyzer;
+    }
+
+    private void bind(@NonNull ProcessCameraProvider cameraProvider, ImageAnalysis imageAnalyzer, Preview preview){
         cameraProvider.unbindAll();
         cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalyzer);
     }
+
 
     @Override
     protected void onDestroy() {
@@ -128,7 +152,6 @@ public class MainActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this,
                     allNeededPermissions.toArray(new String[0]), PERMISSION_REQUESTS);
         }
-
     }
 
     private static boolean isPermissionGranted(Context context, String permission){
@@ -153,17 +176,49 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public synchronized ImageAnalysis getImageAnalyzer(){
-        if (imageAnalyzer == null) {
-            imageAnalyzer = new ImageAnalysis.Builder()
-                    .setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                    .build();
-            imageAnalyzer.setAnalyzer(cameraExecutor, new TextReaderAnalyzer());
+    public class TextReaderAnalyzer implements ImageAnalysis.Analyzer{
+        @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
+        @Override
+        public void analyze(@NonNull ImageProxy imageProxy) {
+            Image mediaImage = imageProxy.getImage();
+            if (mediaImage == null) return;
+
+            process(imageProxy.getImage(), imageProxy);
         }
 
-        return imageAnalyzer;
-    }
+        private void process(Image image, ImageProxy imageProxy) {
+            readTextFromImage(InputImage.fromMediaImage(image, 90), imageProxy);
+        }
 
+        private void readTextFromImage(InputImage image, ImageProxy imageProxy){
+            TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+                    .process(image)
+                    .addOnSuccessListener(text -> {
+                        processTextFromImage(text);
+                        imageProxy.close();
+                    });
+        }
+
+        private void processTextFromImage(Text text) {
+            int count = binding.getRoot().getChildCount();
+
+            /*// Remove the text graphics so that we can redraw them
+            for (int i = 1; i <= count; i++) {
+                if (binding.getRoot().getChildAt(i) instanceof TextGraphic){
+                    binding.getRoot().removeViewAt(i);
+                }
+            }*/
+
+            previewView.removeViews(1, previewView.getChildCount() - 1);
+
+            results.clear();
+
+            for (Text.TextBlock textBlock : text.getTextBlocks()) {
+                results.add(textBlock.getText());
+                previewView.addView(new TextGraphic(MainActivity.this, textBlock));
+            }
+        }
+    }
 
 }
 
