@@ -2,6 +2,7 @@ package com.vaggv.livetranslation;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.hardware.camera2.CameraCharacteristics;
 import android.util.AttributeSet;
 import android.view.View;
@@ -17,6 +18,7 @@ public class GraphicOverlay extends View {
     private float heightScaleFactor = 1.0f;
     private int facing = CameraCharacteristics.LENS_FACING_BACK;
     private Set<Graphic> graphics = new HashSet<>();
+
 
     public GraphicOverlay(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -82,11 +84,9 @@ public class GraphicOverlay extends View {
     }
 
     public void setCameraInfo(int previewWidth, int previewHeight, int facing) {
-        synchronized (lock) {
-            this.previewWidth = previewWidth;
-            this.previewHeight = previewHeight;
-            this.facing = facing;
-        }
+        this.previewWidth = previewWidth;
+        this.previewHeight = previewHeight;
+        this.facing = facing;
         postInvalidate();
     }
 
@@ -95,7 +95,7 @@ public class GraphicOverlay extends View {
         super.onDraw(canvas);
 
         synchronized (lock){
-            if((previewWidth != 0) && (previewHeight != 0)){
+            if ((previewWidth != 0) && (previewHeight != 0)) {
                 widthScaleFactor = (float) canvas.getWidth() / (float) previewWidth;
                 heightScaleFactor = (float) canvas.getHeight() / (float) previewHeight;
             }

@@ -1,5 +1,8 @@
 package com.vaggv.livetranslation;
 
+import static java.lang.Math.max;
+import static java.lang.Math.min;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -13,7 +16,7 @@ import android.view.View;
 
 import com.google.mlkit.vision.text.Text;
 
-public class TextGraphic extends View {
+public class TextGraphic extends GraphicOverlay.Graphic {
 
     private final Paint rectPaint;
     private final Paint textPaint;
@@ -27,8 +30,8 @@ public class TextGraphic extends View {
 
     private final Path path = new Path();
 
-    public TextGraphic(Context context, Text.TextBlock text) {
-        super(context);
+    public TextGraphic(GraphicOverlay graphicOverlay, Text.TextBlock text) {
+        super(graphicOverlay);
 
         rectPaint = new Paint(); 
         rectPaint.setColor(RECT_COLOR);
@@ -42,18 +45,22 @@ public class TextGraphic extends View {
         textPaint.setStyle(Paint.Style.FILL);
 
         this.text = text;
+
+        postInvalidate();
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
+    public void draw(Canvas canvas) {
+        if (text == null) {
+            throw new IllegalStateException("Attempting to draw a null text");
+        }
 
         Point[] points = text.getCornerPoints();
 
         if (points.length == 4){
             for (int i = 0; i < points.length; i++){
-                points[i].x = (int) translate((int) shiftToLeft(points[i].x));
-                points[i].y = (int) translate(points[i].y);
+                points[i].x = (int) translate((int) shiftRight(points[i].x));
+                points[i].y = (int) translate((int) shiftUp(points[i].y));
             }
             float[] pts = {
                     points[0].x, points[0].y, points[1].x, points[1].y,
@@ -73,14 +80,21 @@ public class TextGraphic extends View {
             canvas.drawLines(pts, rectPaint);
             canvas.drawTextOnPath(text.getText(), path, 0f, 0f, textPaint);
         }
+
+        /*RectF rect = new RectF(text.getBoundingBox());
+        canvas.drawRect(rect, rectPaint);*/
     }
 
     private float translate(int num) {
         return num * 2.5f;
     }
 
-    private float shiftToLeft(int num){
-        return num;
+    private float shiftUp(int num){
+        return num - 35f;
+    }
+
+    private float shiftRight(int num){
+        return num + 15f;
     }
 
 }

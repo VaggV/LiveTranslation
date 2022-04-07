@@ -47,31 +47,22 @@ public class LoginActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
 
         instantLogin = findViewById(R.id.instantLogin);
-
-        instantLogin.setOnClickListener(view -> instantLogin());
+        instantLogin.setOnClickListener(view -> login("v@v.gr", "123123"));
 
         // Set on click listener methods to buttons
         loginBtn.setOnClickListener(view -> {
-            login();
+            login(emailInput.getText().toString(), passwordInput.getText().toString());
         });
 
         registerBtn.setOnClickListener(view -> {
             // Open register activity on click
             /*final Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
             startActivity(intent);*/
-            Log.i(TAG, "Clicked register button");
+            Toast.makeText(LoginActivity.this, "TODO", Toast.LENGTH_SHORT).show();
         });
     }
 
-    private void instantLogin() {
-        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-        startActivity(intent);
-    }
-
-    private void login() {
-        String email, password;
-        email = emailInput.getText().toString();
-        password = passwordInput.getText().toString();
+    private void login(String email, String password) {
 
         // If email or password inputs are empty then the app doesn't try to login
         if (TextUtils.isEmpty(email)) {

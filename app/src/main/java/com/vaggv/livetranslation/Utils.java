@@ -10,6 +10,7 @@ public class Utils {
             "Slovak","Slovenian","Swedish","Swahili","Tamil","Telugu","Thai","Tagalog",
             "Turkish","Ukrainian","Urdu","Vietnamese","Chinese"};
 
+
     public static String toFullLangString(String lang){
         switch (lang){
             case "af":
@@ -170,12 +171,13 @@ public class Utils {
         switch (lang){
             case "Afrikaans":
                 return "af";
+            case "ar-Latn":
             case "Arabic":
-                return "ar-Latn";
+                return "ar";
             case "Azerbaijani":
                 return "az";
             case "Bulgarian":
-                return "bg-Latn";
+                return "bg";
             case "Bosnian":
                 return "bs";
             case "Catalan":
@@ -192,6 +194,7 @@ public class Utils {
                 return "da";
             case "German":
                 return "de";
+            case "el-Latn":
             case "Greek":
                 return "el";
             case "English":
@@ -223,6 +226,7 @@ public class Utils {
             case "Hawaiian":
                 return "haw";
             case "Hindi":
+            case "hi-Latn":
                 return "hi";
             case "Hmong":
                 return "hmn";
@@ -244,8 +248,12 @@ public class Utils {
                 return "ja";
             case "Javanese":
                 return "jv";
+            case "Kannada":
+                return "kn";
             case "Kurdish":
                 return "ku";
+            case "Korean":
+                return "ko";
             case "Latin":
                 return "la";
             case "Luxembourgish":
@@ -314,4 +322,6 @@ public class Utils {
                 return "";
         }
     }
+
+
 }
