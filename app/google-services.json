@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "204543937865",
+    "project_id": "livetranslation-613fc",
+    "storage_bucket": "livetranslation-613fc.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:204543937865:android:26b9396801dec9240b9e98",
+        "android_client_info": {
+          "package_name": "com.vaggv.livetranslation"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "204543937865-otjm1igmurd1epmli6mi72all1132in4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCePXOBsBxYIJqp9QBs8aRNvWDj4ndmqZU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "204543937865-otjm1igmurd1epmli6mi72all1132in4.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

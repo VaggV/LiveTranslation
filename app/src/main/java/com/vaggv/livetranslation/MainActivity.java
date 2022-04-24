@@ -9,7 +9,6 @@ import androidx.annotation.OptIn;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.AspectRatio;
 import androidx.camera.core.Camera;
-import androidx.camera.core.CameraInfo;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
@@ -19,20 +18,13 @@ import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
-import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraManager;
 import android.media.Image;
 import android.os.Bundle;
-import android.os.Handler;
 import android.util.Log;
-import android.util.Pair;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -41,14 +33,6 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.auth.FirebaseAuth;
@@ -62,7 +46,6 @@ import com.google.mlkit.nl.translate.Translation;
 import com.google.mlkit.nl.translate.Translator;
 import com.google.mlkit.nl.translate.TranslatorOptions;
 import com.google.mlkit.vision.common.InputImage;
-import com.google.mlkit.vision.common.internal.ImageUtils;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
@@ -71,7 +54,6 @@ import com.vaggv.livetranslation.databinding.ActivityMainBinding;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
@@ -88,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private ExecutorService cameraExecutor;
     private ImageAnalysis imageAnalyzer;
     private ActivityMainBinding binding;
-    private Button getTextBtn;
+    private Button getTextBtn, popularTxtBtn;
     private FloatingActionButton flashlightButton, settingsButton;
     private ArrayList<String> results;
     private TextView srcText, srcLang, translatedText, progressText;
@@ -119,6 +101,7 @@ public class MainActivity extends AppCompatActivity {
         progressText = findViewById(R.id.progressText);
         flashlightButton = findViewById(R.id.flashlightButton);
         settingsButton = findViewById(R.id.settingsButton);
+        popularTxtBtn = findViewById(R.id.popularTxtBtn);
 
         firebaseAuth = FirebaseAuth.getInstance();
         modelManager = RemoteModelManager.getInstance();
@@ -145,6 +128,9 @@ public class MainActivity extends AppCompatActivity {
 
             startActivity(intent);
         });
+
+        popularTxtBtn.setOnClickListener(view -> startActivity(
+                new Intent(MainActivity.this, PopularTextActivity.class)));
 
         // Set the languages list to the dropdown
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, languages);
@@ -200,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
     public class TextReaderAnalyzer implements ImageAnalysis.Analyzer{
         @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
         @Override
-        public void analyze(@NonNull ImageProxy imageProxy) {
+        public void analyze(@NonNull ImageProxy imageProxy){
             Image image = imageProxy.getImage();
             if (image == null) return;
 
@@ -299,8 +285,6 @@ public class MainActivity extends AppCompatActivity {
                 if (firebaseAuth.getCurrentUser() != null) userid = firebaseAuth.getCurrentUser().getEmail();
                 else userid = "null";
 
-                RequestQueue requestQueue = Volley.newRequestQueue(MainActivity.this);
-                String url = "http://192.168.1.18:8080/api/translations";
                 JSONObject jsonBody = new JSONObject();
                 Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
@@ -314,23 +298,8 @@ public class MainActivity extends AppCompatActivity {
                 jsonBody.put("translatedtext", translatedtext);
                 jsonBody.put("translatedtextlang", translatedtextlang);
 
-                final String mRequestBody = jsonBody.toString();
+                ApiHandler.postRequest(MainActivity.this, "http://192.168.1.18:8080/api/translations", jsonBody);
 
-                StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
-                        response -> Toast.makeText(MainActivity.this, "Successfully saved event", Toast.LENGTH_LONG).show(),
-                        error -> Toast.makeText(MainActivity.this, "Error while saving event", Toast.LENGTH_LONG).show()) {
-                    @Override
-                    public String getBodyContentType() {
-                        return "application/json; charset=utf-8";
-                    }
-
-                    @Override
-                    public byte[] getBody() throws AuthFailureError {
-                        return mRequestBody.getBytes(StandardCharsets.UTF_8);
-                    }
-                };
-
-                requestQueue.add(stringRequest);
             } catch (JSONException e){
                 e.printStackTrace();
             }

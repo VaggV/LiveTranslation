@@ -71,7 +71,8 @@
         android:layout_marginBottom="16dp"
         android:text="Get text"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/settingsButton"
+        app:layout_constraintEnd_toStartOf="@+id/popularTxtBtn"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/flashlightButton" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -141,20 +142,31 @@
         android:layout_width="30dp"
         android:layout_height="30dp"
         android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="@id/targetLangSelector"
         app:layout_constraintStart_toEndOf="@+id/targetLangSelector"
-        app:layout_constraintTop_toTopOf="@id/targetLangSelector"
-        app:layout_constraintBottom_toBottomOf="@id/targetLangSelector" />
+        app:layout_constraintTop_toTopOf="@id/targetLangSelector" />
 
     <TextView
         android:id="@+id/progressText"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:gravity="center_vertical"
-        android:text="downloading_model_files"
+        android:text="@string/downloading_model_files"
         android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="@id/progressBar"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/progressBar"
         app:layout_constraintTop_toTopOf="@id/progressBar" />
+
+    <Button
+        android:id="@+id/popularTxtBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Popular words"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/settingsButton"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/getTextBtn" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
