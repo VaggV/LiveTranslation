@@ -26,7 +26,7 @@ public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
 
     private EditText emailInput, passwordInput;
-    private Button loginBtn, registerBtn, instantLogin;
+    private Button loginBtn, registerBtn, instantLogin, openActivity;
     private ProgressBar progressBar;
 
     private final static String TAG = "LoginActivity";
@@ -48,6 +48,11 @@ public class LoginActivity extends AppCompatActivity {
 
         instantLogin = findViewById(R.id.instantLogin);
         instantLogin.setOnClickListener(view -> login("v@v.gr", "123123"));
+
+        openActivity = findViewById(R.id.openActivity);
+        openActivity.setOnClickListener(view -> {
+            startActivity(new Intent(LoginActivity.this, PopularTextActivity.class));
+        });
 
         // Set on click listener methods to buttons
         loginBtn.setOnClickListener(view -> {

@@ -3,6 +3,7 @@ package com.vaggv.livetranslation;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import com.android.volley.Request;
@@ -33,6 +34,9 @@ public class PopularTextActivity extends AppCompatActivity {
                 response -> responseText.setText(response),
                 error -> {
             responseText.setText(error.toString());
+                    Log.e("PopularTextActivity", "ERROR ON VOLLEY", error);
         });
+
+        requestQueue.add(stringRequest);
     }
 }

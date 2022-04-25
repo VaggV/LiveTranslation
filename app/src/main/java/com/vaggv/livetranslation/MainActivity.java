@@ -158,7 +158,8 @@ public class MainActivity extends AppCompatActivity {
 
         cameraProviderFuture.addListener(() -> {
             Preview preview = new Preview.Builder().build();
-            preview.setSurfaceProvider(previewView.getSurfaceProvider());
+            //preview.setSurfaceProvider(previewView.getSurfaceProvider());
+            preview.setSurfaceProvider(binding.previewView.getSurfaceProvider());
             try {
                 bind(cameraProviderFuture.get(), imageAnalyzer, preview);
             } catch (ExecutionException | InterruptedException e) {
@@ -178,8 +179,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void bind(@NonNull ProcessCameraProvider cameraProvider, ImageAnalysis imageAnalyzer, Preview preview){
         cameraProvider.unbindAll();
-        camera = cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalyzer);
         System.out.println("CAMERA INFO: " + cameraProvider.getAvailableCameraInfos());
+        camera = cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalyzer);
     }
 
 
