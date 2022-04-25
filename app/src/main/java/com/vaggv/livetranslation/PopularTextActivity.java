@@ -30,7 +30,7 @@ public class PopularTextActivity extends AppCompatActivity {
         RequestQueue requestQueue = Volley.newRequestQueue(PopularTextActivity.this);
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                "http://localhost:8080/api/populartranslations",
+                "http://192.168.1.8:8080/api/populartranslations", // 192.168.1.8 for mac
                 response -> responseText.setText(response),
                 error -> {
             responseText.setText(error.toString());
