@@ -23,10 +23,11 @@ public class PopularTextActivity extends AppCompatActivity {
 
         responseText = findViewById(R.id.responseText);
 
-        getRequest();
+        getPopularTranslations();
+        // TODO: na kanw sort ta apotelesmata kai na ftiaksw to design
     }
 
-    private void getRequest(){
+    private void getPopularTranslations(){
         RequestQueue requestQueue = Volley.newRequestQueue(PopularTextActivity.this);
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET,
@@ -34,7 +35,7 @@ public class PopularTextActivity extends AppCompatActivity {
                 response -> responseText.setText(response),
                 error -> {
             responseText.setText(error.toString());
-                    Log.e("PopularTextActivity", "ERROR ON VOLLEY", error);
+            Log.e("PopularTextActivity", "ERROR ON VOLLEY", error);
         });
 
         requestQueue.add(stringRequest);

@@ -1,6 +1,7 @@
 package com.vaggv.livetranslation;
 
 import android.content.Context;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
@@ -23,14 +24,15 @@ public class ApiHandler {
 
         StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
                 response -> Toast.makeText(context, "Successfully saved event", Toast.LENGTH_LONG).show(),
-                error -> Toast.makeText(context, "Error while saving event", Toast.LENGTH_LONG).show()) {
+                error -> Log.e("ApiHandler", "Error while saving event", error)) {
+            //Toast.makeText(context, "Error while saving event", Toast.LENGTH_LONG).show()
             @Override
             public String getBodyContentType() {
                 return "application/json; charset=utf-8";
             }
 
             @Override
-            public byte[] getBody() throws AuthFailureError {
+            public byte[] getBody() {
                 return requestBody.getBytes(StandardCharsets.UTF_8);
             }
         };

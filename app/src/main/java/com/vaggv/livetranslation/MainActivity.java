@@ -282,6 +282,11 @@ public class MainActivity extends AppCompatActivity {
 
         private void saveEvent(String originaltext, String textlang, String translatedtext, String translatedtextlang){
             try {
+                // TODO: Na apothikevw thn kathe metafrash se mia metavlhth
+                //  previous kai meta na elegxw to similarity se sxesh me to
+                //  prohgoumeno, ama exoyn toulaxiston 70% similarity
+                //  na mhn ginetai save
+
                 String userid;
                 if (firebaseAuth.getCurrentUser() != null) userid = firebaseAuth.getCurrentUser().getEmail();
                 else userid = "null";
@@ -294,12 +299,12 @@ public class MainActivity extends AppCompatActivity {
                 jsonBody.put("timestamp", timestamp);
                 jsonBody.put("location", "Greece");
                 jsonBody.put("userid", userid);
-                jsonBody.put("originaltext", originaltext);
+                jsonBody.put("originaltext", originaltext.replace("\n", " "));
                 jsonBody.put("textlang", textlang);
                 jsonBody.put("translatedtext", translatedtext);
                 jsonBody.put("translatedtextlang", translatedtextlang);
 
-                ApiHandler.postRequest(MainActivity.this, "http://192.168.1.18:8080/api/translations", jsonBody);
+                ApiHandler.postRequest(MainActivity.this, "http://192.168.1.8:8080/api/translations", jsonBody);
 
             } catch (JSONException e){
                 e.printStackTrace();
