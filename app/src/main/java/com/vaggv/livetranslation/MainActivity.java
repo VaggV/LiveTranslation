@@ -1,6 +1,7 @@
 package com.vaggv.livetranslation;
 
 import static com.vaggv.livetranslation.Utils.languages;
+import static com.vaggv.livetranslation.Utils.similarity;
 import static com.vaggv.livetranslation.Utils.toFullLangString;
 import static com.vaggv.livetranslation.Utils.toShortLangString;
 
@@ -20,12 +21,15 @@ import androidx.core.content.ContextCompat;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -56,6 +60,7 @@ import org.json.JSONObject;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -83,6 +88,8 @@ public class MainActivity extends AppCompatActivity {
     private Spinner targetLangSelector;
     private FirebaseAuth firebaseAuth;
     private Camera camera;
+    private String previousText;
+    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Initializations start
+        //region Initializations
         previewView = findViewById(R.id.previewView);
         getTextBtn = findViewById(R.id.getTextBtn);
         srcText = findViewById(R.id.srcText);
@@ -110,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                 new LanguageIdentificationOptions.Builder().setConfidenceThreshold(0.34f).build());
         cameraExecutor = Executors.newSingleThreadExecutor();
         imageAnalyzer = getImageAnalyzer();
-        // Initializations end
+        //endregion
 
         // Check for permissions
         if (allPermissionsGranted()) {
@@ -135,6 +142,14 @@ public class MainActivity extends AppCompatActivity {
         // Set the languages list to the dropdown
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, languages);
         targetLangSelector.setAdapter(adapter);
+
+        prefs = getSharedPreferences("livetranslation_preferences", MODE_PRIVATE);
+        int index = Arrays.asList(languages).indexOf(prefs.getString("list_preference_1", ""));
+        System.out.println("INDEX IS: " + index);
+        System.out.println("############################# \n ####################################### \n #################################");
+        System.out.println("PREFERENCE STRING: " + prefs.getString("list_preference_1", ""));
+        targetLangSelector.setSelection(index);
+
 
         // Flashlight toggle
         final boolean[] isTorchOn = {false};
@@ -183,13 +198,14 @@ public class MainActivity extends AppCompatActivity {
         camera = cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalyzer);
     }
 
-
+    //region TextReaderAnalyzer
     public class TextReaderAnalyzer implements ImageAnalysis.Analyzer{
         @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
         @Override
         public void analyze(@NonNull ImageProxy imageProxy){
             Image image = imageProxy.getImage();
             if (image == null) return;
+
 
             InputImage inputImage = InputImage.fromMediaImage(image, 90);
 
@@ -265,10 +281,20 @@ public class MainActivity extends AppCompatActivity {
                 progressText.setVisibility(View.INVISIBLE);
                 translator.translate(text).addOnSuccessListener(s -> {
                     translatedText.setText(s);
-                    System.out.println("SAVING EVENT");
-                    saveEvent(text, toFullLangString(sourceLang), s, toFullLangString(targetLang));
+
+
+
+                    // If the previous translation and current one have a similarity of
+                    // more than 70% then dont save it to the database
+                    if (previousText != null && similarity(previousText, text) <= 0.7) {
+                        System.out.println("SIMILARITY IS: " + similarity(previousText, text));
+                        System.out.println("SAVING EVENT");
+                        saveEvent(text, toFullLangString(sourceLang), s, toFullLangString(targetLang));
+                        previousText = text;
+                    }
+
                 }).addOnFailureListener(e -> {
-                    Toast.makeText(MainActivity.this, "Failed to translate.", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Failed to translate", e);
                 });
             }).addOnFailureListener(e -> {
                 Toast.makeText(MainActivity.this, "Couldn't download translation model.", Toast.LENGTH_LONG).show();
@@ -282,19 +308,17 @@ public class MainActivity extends AppCompatActivity {
 
         private void saveEvent(String originaltext, String textlang, String translatedtext, String translatedtextlang){
             try {
-                // TODO: Na apothikevw thn kathe metafrash se mia metavlhth
-                //  previous kai meta na elegxw to similarity se sxesh me to
-                //  prohgoumeno, ama exoyn toulaxiston 70% similarity
-                //  na mhn ginetai save
+
 
                 String userid;
+
                 if (firebaseAuth.getCurrentUser() != null) userid = firebaseAuth.getCurrentUser().getEmail();
                 else userid = "null";
 
                 JSONObject jsonBody = new JSONObject();
                 Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-                System.out.println("TIMESTAMP IS: " + timestamp);
+                // TODO: Get location
 
                 jsonBody.put("timestamp", timestamp);
                 jsonBody.put("location", "Greece");
@@ -304,7 +328,7 @@ public class MainActivity extends AppCompatActivity {
                 jsonBody.put("translatedtext", translatedtext);
                 jsonBody.put("translatedtextlang", translatedtextlang);
 
-                ApiHandler.postRequest(MainActivity.this, "http://192.168.1.8:8080/api/translations", jsonBody);
+                ApiHandler.postRequest(MainActivity.this, "http://192.168.1.18:8080/api/translations", jsonBody);
 
             } catch (JSONException e){
                 e.printStackTrace();
@@ -312,6 +336,7 @@ public class MainActivity extends AppCompatActivity {
 
         }
     }
+    //endregion
 
     @Override
     protected void onDestroy() {
@@ -319,7 +344,7 @@ public class MainActivity extends AppCompatActivity {
         cameraExecutor.shutdown();
     }
 
-    // Permissions handling methods
+    //region Permissions handling methods
     private String[] getRequiredPermissions() {
         try {
             PackageInfo info = this.getPackageManager()
@@ -337,7 +362,7 @@ public class MainActivity extends AppCompatActivity {
 
     private boolean allPermissionsGranted(){
         for (String permission : getRequiredPermissions()) {
-            if(!isPermissionGranted(this, permission)) {
+            if(isPermissionGranted(this, permission)) {
                 return false;
             }
         }
@@ -347,7 +372,7 @@ public class MainActivity extends AppCompatActivity {
     private void requestPermissions(){
         List<String> allNeededPermissions = new ArrayList<>();
         for (String permission : getRequiredPermissions()){
-            if (!isPermissionGranted(this, permission)){
+            if (isPermissionGranted(this, permission)){
                 allNeededPermissions.add(permission);
             }
         }
@@ -361,10 +386,10 @@ public class MainActivity extends AppCompatActivity {
     private static boolean isPermissionGranted(Context context, String permission){
         if (ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED){
             Log.i(TAG, "Permission granted: " + permission);
-            return true;
+            return false;
         }
         Log.i(TAG, "Permission NOT granted: " + permission);
-        return false;
+        return true;
     }
 
     @Override
@@ -379,6 +404,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     }
+    //endregion
 
 }
 

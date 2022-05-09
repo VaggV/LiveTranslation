@@ -4,7 +4,7 @@
     <PreferenceCategory app:title="General">
 
         <ListPreference
-            android:defaultValue="1"
+            android:defaultValue="false"
             android:entries="@array/languages"
             android:entryValues="@array/languages"
             android:key="list_preference_1"

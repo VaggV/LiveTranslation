@@ -24,20 +24,28 @@ public class PopularTextActivity extends AppCompatActivity {
         responseText = findViewById(R.id.responseText);
 
         getPopularTranslations();
-        // TODO: na kanw sort ta apotelesmata kai na ftiaksw to design
+        // TODO: design
     }
 
     private void getPopularTranslations(){
         RequestQueue requestQueue = Volley.newRequestQueue(PopularTextActivity.this);
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                "http://192.168.1.8:8080/api/populartranslations", // 192.168.1.8 for mac
-                response -> responseText.setText(response),
+                "http://192.168.1.18:8080/api/populartranslations", // 192.168.1.8 for mac
+                response -> {
+            responseText.setText("");
+            String[] popularTranslations = response.substring(1).replace("]", "").split(",");
+            for (String x : popularTranslations){
+                responseText.setText(responseText.getText() + x.replace("\"", "").split("\\*")[0] + "\n\n");
+            }
+                },
                 error -> {
             responseText.setText(error.toString());
             Log.e("PopularTextActivity", "ERROR ON VOLLEY", error);
         });
 
         requestQueue.add(stringRequest);
+
+
     }
 }
