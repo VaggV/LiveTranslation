@@ -1,4 +1,4 @@
-package com.vaggv.livetranslation;
+package com.vaggv.livetranslation.activities;
 
 import static com.vaggv.livetranslation.Utils.languages;
 import static com.vaggv.livetranslation.Utils.similarity;
@@ -15,23 +15,19 @@ import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
-import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.media.Image;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.SurfaceView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -53,6 +49,9 @@ import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+import com.vaggv.livetranslation.ApiHandler;
+import com.vaggv.livetranslation.R;
+import com.vaggv.livetranslation.Utils;
 import com.vaggv.livetranslation.databinding.ActivityMainBinding;
 
 import org.json.JSONException;
@@ -74,9 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private ExecutorService cameraExecutor;
     private ImageAnalysis imageAnalyzer;
     private ActivityMainBinding binding;
-    private Button getTextBtn, popularTxtBtn;
-    private FloatingActionButton flashlightButton, settingsButton;
-    private ArrayList<String> results;
+    private FloatingActionButton flashlightButton;
     private TextView srcText, srcLang, translatedText, progressText;
     private LanguageIdentifier languageIdentifier;
     private ProgressBar progressBar;
@@ -88,7 +85,6 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
     private Camera camera;
     private String previousText; // Previous translation
-    private SharedPreferences prefs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,7 +93,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         //region Initializations
-        getTextBtn = findViewById(R.id.getTextBtn);
         srcText = findViewById(R.id.srcText);
         srcLang = findViewById(R.id.srcLang);
         translatedText = findViewById(R.id.translatedText);
@@ -105,8 +100,6 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         progressText = findViewById(R.id.progressText);
         flashlightButton = findViewById(R.id.flashlightButton);
-        settingsButton = findViewById(R.id.settingsButton);
-        popularTxtBtn = findViewById(R.id.popularTxtBtn);
 
         firebaseAuth = FirebaseAuth.getInstance();
         modelManager = RemoteModelManager.getInstance();
@@ -124,28 +117,19 @@ public class MainActivity extends AppCompatActivity {
             requestPermissions();
         }
 
-        results = new ArrayList<>();
-
-        // Open ResultActivity on click
-        getTextBtn.setOnClickListener(view -> {
-            Intent intent = new Intent(MainActivity.this, ResultActivity.class);
-            intent.putExtra("results", results);
-
-            startActivity(intent);
-        });
-
-        popularTxtBtn.setOnClickListener(view -> startActivity(
-                new Intent(MainActivity.this, PopularTextActivity.class)));
-
         // Set the languages list to the dropdown
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, androidx.appcompat.R.layout.support_simple_spinner_dropdown_item, languages);
         targetLangSelector.setAdapter(adapter);
 
-        prefs = getSharedPreferences("livetranslation_preferences", MODE_PRIVATE);
-        int index = Arrays.asList(languages).indexOf(prefs.getString("list_preference_1", ""));
-        System.out.println("INDEX IS: " + index);
-        System.out.println("############################# \n ####################################### \n #################################");
-        System.out.println("PREFERENCE STRING: " + prefs.getString("list_preference_1", ""));
+        // Read the settings values
+        PreferenceManager.setDefaultValues(this, R.xml.root_preferences, false);
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        // Get the default translating language setting value
+        String defaultLang = preferences.getString("default_translating_language", "NO");
+
+        // Set the spinner selected item to the one in the options
+        int index = Arrays.asList(languages).indexOf(defaultLang);
         targetLangSelector.setSelection(index);
 
 
@@ -159,10 +143,6 @@ public class MainActivity extends AppCompatActivity {
                 if (isTorchOn[0]) flashlightButton.setImageResource(R.drawable.flash_off_icon);
                 else flashlightButton.setImageResource(R.drawable.flash_icon);
             }
-        });
-
-        settingsButton.setOnClickListener(view -> {
-            startActivity(new Intent(MainActivity.this, SettingsActivity.class));
         });
     }
 

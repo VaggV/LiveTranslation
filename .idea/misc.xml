@@ -13,6 +13,11 @@
         <entry key="..\:/Users/Vaggelis/AndroidStudioProjects/LiveTranslation/app/src/main/res/layout/settings_activity.xml" value="0.3625" />
         <entry key="..\:/Users/Vaggelis/AndroidStudioProjects/LiveTranslation/app/src/main/res/xml/network_security_config.xml" value="0.3625" />
         <entry key="..\:/Users/Vaggelis/AndroidStudioProjects/LiveTranslation/app/src/main/res/xml/root_preferences.xml" value="0.29342105263157897" />
+        <entry key="app/src/main/res/layout/activity_login.xml" value="0.18513513513513513" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.23894574964368664" />
+        <entry key="app/src/main/res/layout/activity_menu.xml" value="0.1929054054054054" />
+        <entry key="app/src/main/res/layout/activity_popular_text.xml" value="0.1929054054054054" />
+        <entry key="app/src/main/res/xml/root_preferences.xml" value="0.1929054054054054" />
       </map>
     </option>
   </component>

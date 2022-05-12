@@ -1,10 +1,12 @@
-package com.vaggv.livetranslation;
+package com.vaggv.livetranslation.activities;
 
 import android.os.Bundle;
 
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceFragmentCompat;
+
+import com.vaggv.livetranslation.R;
 
 public class SettingsActivity extends AppCompatActivity {
 

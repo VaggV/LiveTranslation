@@ -1,4 +1,4 @@
-package com.vaggv.livetranslation;
+package com.vaggv.livetranslation.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -8,10 +8,9 @@ import android.widget.TextView;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.vaggv.livetranslation.R;
 
 public class PopularTextActivity extends AppCompatActivity {
     private TextView responseText;
@@ -23,8 +22,8 @@ public class PopularTextActivity extends AppCompatActivity {
 
         responseText = findViewById(R.id.responseText);
 
-        getPopularTranslations();
-        // TODO: design
+        //getPopularTranslations();
+
     }
 
     private void getPopularTranslations(){
