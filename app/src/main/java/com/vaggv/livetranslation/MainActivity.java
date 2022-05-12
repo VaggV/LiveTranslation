@@ -71,7 +71,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_REQUESTS = 1;
 
-    private PreviewView previewView;
     private ExecutorService cameraExecutor;
     private ImageAnalysis imageAnalyzer;
     private ActivityMainBinding binding;
@@ -88,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner targetLangSelector;
     private FirebaseAuth firebaseAuth;
     private Camera camera;
-    private String previousText;
+    private String previousText; // Previous translation
     private SharedPreferences prefs;
 
     @Override
@@ -98,7 +97,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         //region Initializations
-        previewView = findViewById(R.id.previewView);
         getTextBtn = findViewById(R.id.getTextBtn);
         srcText = findViewById(R.id.srcText);
         srcLang = findViewById(R.id.srcLang);
@@ -281,8 +279,6 @@ public class MainActivity extends AppCompatActivity {
                 progressText.setVisibility(View.INVISIBLE);
                 translator.translate(text).addOnSuccessListener(s -> {
                     translatedText.setText(s);
-
-
 
                     // If the previous translation and current one have a similarity of
                     // more than 70% then dont save it to the database
