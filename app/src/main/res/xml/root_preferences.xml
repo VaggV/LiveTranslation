@@ -5,11 +5,13 @@
 
         <ListPreference
             android:defaultValue="Greek"
+            android:dialogIcon="@drawable/lang_icon"
             android:entries="@array/languages"
             android:entryValues="@array/languages_values"
+            android:icon="@drawable/lang_icon"
             android:key="default_translating_language"
-            android:title="Default translating language"
-            android:summary="Pick a default language to translate your text to"/>
+            android:summary="Pick a default language to translate your text to"
+            android:title="Default translating language" />
 
     </PreferenceCategory>
 

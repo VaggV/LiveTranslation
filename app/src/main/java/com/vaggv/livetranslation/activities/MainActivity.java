@@ -7,6 +7,7 @@ import static com.vaggv.livetranslation.Utils.toShortLangString;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.OptIn;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.AspectRatio;
 import androidx.camera.core.Camera;
@@ -14,25 +15,42 @@ import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
+import androidx.camera.core.UseCase;
+import androidx.camera.core.UseCaseGroup;
+import androidx.camera.core.ViewPort;
 import androidx.camera.lifecycle.ProcessCameraProvider;
+import androidx.camera.view.PreviewView;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.hardware.display.DisplayManager;
+import android.location.Location;
 import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.Rational;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.CancellationToken;
+import com.google.android.gms.tasks.CancellationTokenSource;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.firebase.auth.FirebaseAuth;
@@ -70,15 +88,17 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int PERMISSION_REQUESTS = 1;
 
+    TranslatorOptions options;
+
+    private PreviewView previewView;
+    private FusedLocationProviderClient fusedLocation;
     private ExecutorService cameraExecutor;
     private ImageAnalysis imageAnalyzer;
-    private ActivityMainBinding binding;
     private FloatingActionButton flashlightButton;
     private TextView srcText, srcLang, translatedText, progressText;
     private LanguageIdentifier languageIdentifier;
     private ProgressBar progressBar;
     private RemoteModelManager modelManager;
-    private TranslatorOptions options;
     private Translator translator;
     private DownloadConditions conditions;
     private Spinner targetLangSelector;
@@ -89,8 +109,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.activity_main);
 
         //region Initializations
         srcText = findViewById(R.id.srcText);
@@ -100,7 +119,9 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         progressText = findViewById(R.id.progressText);
         flashlightButton = findViewById(R.id.flashlightButton);
+        previewView = findViewById(R.id.previewView);
 
+        fusedLocation = LocationServices.getFusedLocationProviderClient(this);
         firebaseAuth = FirebaseAuth.getInstance();
         modelManager = RemoteModelManager.getInstance();
         conditions = new DownloadConditions.Builder().requireWifi().build();
@@ -136,7 +157,7 @@ public class MainActivity extends AppCompatActivity {
         // Flashlight toggle
         final boolean[] isTorchOn = {false};
         flashlightButton.setOnClickListener(view -> {
-            if ( camera.getCameraInfo().hasFlashUnit() ) {
+            if (camera.getCameraInfo().hasFlashUnit()) {
                 camera.getCameraControl().enableTorch(!isTorchOn[0]);
                 isTorchOn[0] = !isTorchOn[0];
 
@@ -146,13 +167,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void startCamera(){
+    private void startCamera() {
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
 
         cameraProviderFuture.addListener(() -> {
             Preview preview = new Preview.Builder().build();
             //preview.setSurfaceProvider(previewView.getSurfaceProvider());
-            preview.setSurfaceProvider(binding.previewView.getSurfaceProvider());
+            preview.setSurfaceProvider(previewView.getSurfaceProvider());
             try {
                 bind(cameraProviderFuture.get(), imageAnalyzer, preview);
             } catch (ExecutionException | InterruptedException e) {
@@ -161,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    public synchronized ImageAnalysis getImageAnalyzer(){
+    public synchronized ImageAnalysis getImageAnalyzer() {
         if (imageAnalyzer == null) {
             imageAnalyzer = new ImageAnalysis.Builder()
                     .setTargetAspectRatio(AspectRatio.RATIO_4_3).build();
@@ -170,20 +191,28 @@ public class MainActivity extends AppCompatActivity {
         return imageAnalyzer;
     }
 
-    private void bind(@NonNull ProcessCameraProvider cameraProvider, ImageAnalysis imageAnalyzer, Preview preview){
+    private void bind(@NonNull ProcessCameraProvider cameraProvider, ImageAnalysis imageAnalyzer, Preview preview) {
         cameraProvider.unbindAll();
-        System.out.println("CAMERA INFO: " + cameraProvider.getAvailableCameraInfos());
-        camera = cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalyzer);
+
+        ViewPort viewPort = previewView.getViewPort();
+
+        UseCaseGroup useCaseGroup = new UseCaseGroup.Builder()
+                .addUseCase(preview)
+                .addUseCase(imageAnalyzer)
+                .setViewPort(viewPort)
+                .build();
+        camera = cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, useCaseGroup);
+
+        //camera = cameraProvider.bindToLifecycle(this, CameraSelector.DEFAULT_BACK_CAMERA, preview, imageAnalyzer);
     }
 
     //region TextReaderAnalyzer
-    public class TextReaderAnalyzer implements ImageAnalysis.Analyzer{
+    public class TextReaderAnalyzer implements ImageAnalysis.Analyzer {
         @OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)
         @Override
-        public void analyze(@NonNull ImageProxy imageProxy){
+        public void analyze(@NonNull ImageProxy imageProxy) {
             Image image = imageProxy.getImage();
             if (image == null) return;
-
 
             InputImage inputImage = InputImage.fromMediaImage(image, 90);
 
@@ -210,23 +239,26 @@ public class MainActivity extends AppCompatActivity {
                             System.out.println("RESULT IS: " + result);
                             srcLang.setText(Utils.toFullLangString(result));
                             System.out.println("Target lang: " + targetLangSelector.getSelectedItem().toString());
-                            translate(txt, result.replace("-Latn", ""), toShortLangString(targetLangSelector.getSelectedItem().toString()), targetLangSelector.getSelectedItem().toString());
+                            translate(txt, result.replace("-Latn", ""), toShortLangString(targetLangSelector.getSelectedItem().toString()));
                         }
                     });
 
             imageProxy.close();
         }
 
-        private void translate(String text, String sourceLang, String targetLang, String temp){
+        private void translate(String text, String sourceLang, String targetLang) {
             System.out.println("++++++++");
             System.out.println("SOURCE LANG: " + sourceLang);
             System.out.println("TARGET LANG: " + targetLang);
-            if (sourceLang.equals("")){
-                Toast.makeText(MainActivity.this, "Source lang string is empty: " + temp, Toast.LENGTH_LONG).show();
+
+            if (sourceLang.equals(targetLang)) return;
+
+            if (sourceLang.equals("")) {
+                Toast.makeText(MainActivity.this, "Source lang string is empty", Toast.LENGTH_LONG).show();
                 return;
             }
 
-            if (targetLang.equals("")){
+            if (targetLang.equals("")) {
                 Toast.makeText(MainActivity.this, "Target lang string is empty", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -260,14 +292,39 @@ public class MainActivity extends AppCompatActivity {
                 translator.translate(text).addOnSuccessListener(s -> {
                     translatedText.setText(s);
 
-                    // If the previous translation and current one have a similarity of
-                    // more than 70% then dont save it to the database
-                    if (previousText != null && similarity(previousText, text) <= 0.7) {
+
+                    // If the previous translation and current one are similar for
+                    // 70% and more then dont save the event
+                    if (previousText != null && similarity(previousText, text) >= 0.7) {
                         System.out.println("SIMILARITY IS: " + similarity(previousText, text));
-                        System.out.println("SAVING EVENT");
-                        saveEvent(text, toFullLangString(sourceLang), s, toFullLangString(targetLang));
-                        previousText = text;
+                        return;
                     }
+
+                    System.out.println("SAVING EVENT");
+                    CancellationTokenSource src = new CancellationTokenSource();
+                    CancellationToken ct = src.getToken();
+
+                    if (ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                        return;
+                    }
+
+                    fusedLocation.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, ct)
+                            .addOnSuccessListener(location -> {
+                                if (location == null)
+                                    saveEvent(text, toFullLangString(sourceLang),
+                                            s, toFullLangString(targetLang), "null");
+                                else {
+                                    String loc = location.getLatitude() + "CUT" + location.getLongitude();
+                                    saveEvent(text, toFullLangString(sourceLang),
+                                            s, toFullLangString(targetLang), loc);
+                                }
+                            }).addOnFailureListener(e -> {
+                        Log.e(TAG, "ERROR WITH FUSED LOCATION", e);
+                        saveEvent(text, toFullLangString(sourceLang),
+                                s, toFullLangString(targetLang), "null");
+                    });
+
+                    previousText = text;
 
                 }).addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to translate", e);
@@ -282,10 +339,8 @@ public class MainActivity extends AppCompatActivity {
 
         }
 
-        private void saveEvent(String originaltext, String textlang, String translatedtext, String translatedtextlang){
+        private void saveEvent(String originaltext, String textlang, String translatedtext, String translatedtextlang, String location){
             try {
-
-
                 String userid;
 
                 if (firebaseAuth.getCurrentUser() != null) userid = firebaseAuth.getCurrentUser().getEmail();
@@ -294,17 +349,15 @@ public class MainActivity extends AppCompatActivity {
                 JSONObject jsonBody = new JSONObject();
                 Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
-                // TODO: Get location
-
                 jsonBody.put("timestamp", timestamp);
-                jsonBody.put("location", "Greece");
+                jsonBody.put("location", location);
                 jsonBody.put("userid", userid);
                 jsonBody.put("originaltext", originaltext.replace("\n", " "));
                 jsonBody.put("textlang", textlang);
                 jsonBody.put("translatedtext", translatedtext);
                 jsonBody.put("translatedtextlang", translatedtextlang);
 
-                ApiHandler.postRequest(MainActivity.this, "http://192.168.1.18:8080/api/translations", jsonBody);
+                ApiHandler.postRequest(MainActivity.this, "http://192.168.1.8:8080/api/translations", jsonBody);
 
             } catch (JSONException e){
                 e.printStackTrace();
