@@ -1,6 +1,14 @@
 package com.vaggv.livetranslation;
 
+import android.content.Context;
+import android.location.Address;
+import android.location.Geocoder;
+
 import org.apache.commons.text.similarity.LevenshteinDistance;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 
 public class Utils {
     public static double similarity(String s1, String s2) {
@@ -13,6 +21,24 @@ public class Utils {
 
         LevenshteinDistance x = new LevenshteinDistance();
         return (longerLength - x.apply(longer, shorter)) / (double) longerLength;
+    }
+
+    public static String getCountryFromCords(Context context, String lat, String lon){
+        Address address;
+        List<Address> addresses = null;
+        Geocoder geocoder = new Geocoder(context, Locale.getDefault());
+        try {
+            addresses = geocoder.getFromLocation(Double.parseDouble(lat), Double.parseDouble(lon), 1);
+        } catch (IOException | IllegalArgumentException e) {
+            e.printStackTrace();
+        }
+
+        if (addresses != null && !addresses.isEmpty()) {
+            address = addresses.get(0);
+            return address.getCountryName();
+        }
+
+        return "null";
     }
 
     public static final String[] languages = {"English","Greek","Afrikaans","Albanian","Arabic","Belarusian","Bulgarian",

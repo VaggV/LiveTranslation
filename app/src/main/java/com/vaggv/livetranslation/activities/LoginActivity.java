@@ -3,6 +3,7 @@ package com.vaggv.livetranslation.activities;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -16,6 +17,9 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.auth.FirebaseAuthInvalidUserException;
 import com.vaggv.livetranslation.R;
+import com.vaggv.livetranslation.Utils;
+
+import java.util.Locale;
 
 public class LoginActivity extends AppCompatActivity {
     private FirebaseAuth mAuth;
