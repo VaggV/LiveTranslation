@@ -26,7 +26,7 @@ public class MenuActivity extends AppCompatActivity {
         });
 
         openStatsBtn.setOnClickListener(v -> {
-            startActivity(new Intent(MenuActivity.this, PopularTextActivity.class));
+            startActivity(new Intent(MenuActivity.this, StatsMenu.class));
         });
 
         openSettingsBtn.setOnClickListener(v -> {

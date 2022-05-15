@@ -22,7 +22,7 @@ public class PopularTextActivity extends AppCompatActivity {
 
         responseText = findViewById(R.id.responseText);
 
-        //getPopularTranslations();
+        getPopularTranslations();
 
     }
 

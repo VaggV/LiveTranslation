@@ -39,8 +39,4 @@ public class ApiHandler {
 
         requestQueue.add(stringRequest);
     }
-
-    public static void getRequest(Context context, String url){
-
-    }
 }

@@ -26,4 +26,5 @@
     </string>
     <string name="attachment_summary_off">Only download attachments when manually requested</string>
     <string name="downloading_model_files">Downloading model files…</string>
+    <string name="title_activity_maps">MapsActivity</string>
 </resources>
