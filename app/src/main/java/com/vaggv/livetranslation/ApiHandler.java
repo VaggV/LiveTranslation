@@ -39,4 +39,8 @@ public class ApiHandler {
 
         requestQueue.add(stringRequest);
     }
+    // "/translations" GET
+    // "/usersstotal" (total translations per user)
+    // "/popularwords"
+    // "/popularlanguages"
 }
