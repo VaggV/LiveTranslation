@@ -357,7 +357,7 @@ public class MainActivity extends AppCompatActivity {
                 jsonBody.put("translatedtext", translatedtext);
                 jsonBody.put("translatedtextlang", translatedtextlang);
 
-                ApiHandler.postRequest(MainActivity.this, "http://192.168.1.8:8080/api/translations", jsonBody);
+                ApiHandler.postRequest(MainActivity.this, Utils.url + "/api/translations", jsonBody);
 
             } catch (JSONException e){
                 e.printStackTrace();

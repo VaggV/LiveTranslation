@@ -18,46 +18,44 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class PopularTextActivity extends AppCompatActivity {
-    private TextView popularText;
+public class PopularLanguagesActivity extends AppCompatActivity {
+    private TextView popularLanguages;
     private Button back;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_popular_text);
+        setContentView(R.layout.activity_popular_languages);
 
-        popularText = findViewById(R.id.popularText);
-        back = findViewById(R.id.backButtonPT);
+        popularLanguages = findViewById(R.id.popularLanguages);
+        back = findViewById(R.id.backButtonPL);
 
         back.setOnClickListener(v -> finish());
 
-        getPopularTranslations();
-
+        getPopularLanguages();
     }
 
-    private void getPopularTranslations(){
-        RequestQueue requestQueue = Volley.newRequestQueue(PopularTextActivity.this);
+    private void getPopularLanguages(){
+        RequestQueue requestQueue = Volley.newRequestQueue(PopularLanguagesActivity.this);
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                Utils.url + "/api/populartranslations",
+                Utils.url + "/api/popularlanguages?translatedLanguage=true",
                 response -> {
-                    popularText.setText("");
+                    popularLanguages.setText("");
                     try {
                         JSONArray array = new JSONArray(response);
                         for (int i = 0; i < array.length(); i++) {
                             JSONObject obj = array.getJSONObject(i);
-                            popularText.setText(popularText.getText() + obj.getString("value") + " - " + obj.getString("counter") + " times\n\n\n" );
+                            popularLanguages.setText(popularLanguages.getText() + obj.getString("value") + " - " + obj.getString("counter") + " translations\n\n\n" );
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
                 },
                 error -> {
-                    popularText.setText(error.toString());
-            Log.e("PopularTextActivity", "ERROR ON VOLLEY", error);
-        });
+                    popularLanguages.setText(error.toString());
+                    Log.e("PopularTextActivity", "ERROR ON VOLLEY", error);
+                });
 
         requestQueue.add(stringRequest);
     }

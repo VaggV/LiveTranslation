@@ -17,6 +17,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.vaggv.livetranslation.R;
+import com.vaggv.livetranslation.Utils;
 import com.vaggv.livetranslation.databinding.ActivityMapsBinding;
 
 import org.json.JSONArray;
@@ -67,7 +68,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         RequestQueue requestQueue = Volley.newRequestQueue(MapsActivity.this);
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                "http://192.168.1.8:8080/api/translations", // 192.168.1.8 for mac
+                Utils.url + "/api/translations",
                 response -> {
                     try {
                         JSONArray translations = new JSONArray(response);

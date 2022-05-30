@@ -18,46 +18,49 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class PopularTextActivity extends AppCompatActivity {
-    private TextView popularText;
+public class UserLeaderboardActivity extends AppCompatActivity {
+    private TextView usersResultTxt;
     private Button back;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_popular_text);
+        setContentView(R.layout.activity_user_leaderboard);
 
-        popularText = findViewById(R.id.popularText);
-        back = findViewById(R.id.backButtonPT);
+        usersResultTxt = findViewById(R.id.userLeaderboard);
+        back = findViewById(R.id.backButtonUL);
 
         back.setOnClickListener(v -> finish());
 
-        getPopularTranslations();
-
+        getUsers();
     }
 
-    private void getPopularTranslations(){
-        RequestQueue requestQueue = Volley.newRequestQueue(PopularTextActivity.this);
+    private void getUsers(){
+        RequestQueue requestQueue = Volley.newRequestQueue(UserLeaderboardActivity.this);
 
         StringRequest stringRequest = new StringRequest(Request.Method.GET,
-                Utils.url + "/api/populartranslations",
+                Utils.url + "/api/userstotal",
                 response -> {
-                    popularText.setText("");
+                    usersResultTxt.setText("");
+                    /*String[] popularTranslations = response.substring(1).replace("]", "").split(",");
+                    for (String x : popularTranslations){
+                        usersResultTxt.setText(usersResultTxt.getText() + x.replace("\"", "").split("\\*")[0] + "\n\n");
+                    }*/
                     try {
                         JSONArray array = new JSONArray(response);
                         for (int i = 0; i < array.length(); i++) {
                             JSONObject obj = array.getJSONObject(i);
-                            popularText.setText(popularText.getText() + obj.getString("value") + " - " + obj.getString("counter") + " times\n\n\n" );
+                            usersResultTxt.setText(usersResultTxt.getText() + obj.getString("value") + " - " + obj.getString("counter") + " translations\n\n\n" );
                         }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }
+
                 },
                 error -> {
-                    popularText.setText(error.toString());
-            Log.e("PopularTextActivity", "ERROR ON VOLLEY", error);
-        });
+                    usersResultTxt.setText("There was an error");
+                    Log.e("PopularTextActivity", "ERROR ON VOLLEY", error);
+                });
 
         requestQueue.add(stringRequest);
     }

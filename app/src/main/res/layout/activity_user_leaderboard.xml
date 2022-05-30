@@ -4,10 +4,9 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activities.PopularTextActivity">
+    tools:context=".activities.UserLeaderboardActivity">
 
     <ScrollView
-        android:id="@+id/responseText4"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
@@ -15,7 +14,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/backButtonPT">
+        app:layout_constraintTop_toBottomOf="@+id/backButtonUL">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -25,7 +24,7 @@
             android:textAlignment="center">
 
             <TextView
-                android:id="@+id/popularText"
+                android:id="@+id/userLeaderboard"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="20dp"
@@ -34,7 +33,7 @@
     </ScrollView>
 
     <Button
-        android:id="@+id/backButtonPT"
+        android:id="@+id/backButtonUL"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
